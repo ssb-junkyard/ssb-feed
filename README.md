@@ -1,0 +1,6 @@
+# ssb-feed
+
+
+## License
+
+MIT

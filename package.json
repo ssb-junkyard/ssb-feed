@@ -10,7 +10,8 @@
   "dependencies": {
     "pull-stream": "~2.26.0",
     "cont": "~1.0.3",
-    "pull-cat": "~1.1.5"
+    "pull-cat": "~1.1.5",
+    "monotonic-timestamp": "~0.0.9"
   },
   "devDependencies": {},
   "scripts": {

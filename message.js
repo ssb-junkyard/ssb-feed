@@ -1,4 +1,6 @@
 
+var timestamp = require('monotonic-timestamp')
+
 function isObject (o) {
   return o && 'object' === typeof o
 }
@@ -33,7 +35,7 @@ module.exports = function (opts) {
       previous: prev ? opts.hash(opts.codec.encode(prev)) : null,
       author: opts.hash(keys.public),
       sequence: prev ? prev.sequence + 1 : 1,
-      timestamp: Date.now(),
+      timestamp: timestamp(),
       hash: 'blake2s',
       content: content,
     }, keys)

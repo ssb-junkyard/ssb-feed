@@ -22,43 +22,46 @@ function isObject (o) {
 module.exports = function (ssb, keys, opts) {
 
   var create = Message(opts)
-  var prev = null
   var id = opts.hash(keys.public)
 
-  var getting = null
   function getPrev(next) {
     ssb.getLatest(id, next)
   }
+  function noop (err) {
+    if (err) throw err
+  }
 
-  function noop (err) { if(err) throw err }
-
-  var queue
+  var queue = null
+  var prev = null
+  var writing = false
   return {
     id: id,
+    keys: keys,
     init: function (cb) {
-      this.add({type: 'init', public: keys.public}, cb)
+      this.add({ type: 'init', public: keys.public }, cb)
     },
     add: cont(function (type, message, cb) {
-      if(isFunction(message))
-        cb = message, message = type
-      else if(isObject(message))
-        message.type = type
-      else
-        message = {type: type, value: message}
+      // argument variations
+      if (isFunction(message))    { cb = message; message = type } // add(msgObj, cbFn)
+      else if (isObject(message)) { message.type = type } // add(typeStr, mgObj, cbFn)
+      else                        { message = { type: type, value: message } } // add(typeStr, msgStr, cbFn)
 
-    type = message.type
+      type = message.type
 
-    if(!(isString(type) && type.length <= 52 && type.length >= 3))
-      return cb(new Error(
-        'type must be a string' +
-        '3 <= type.length < 52, was:' + type
-      ))
+      if (!(isString(type) && type.length <= 52 && type.length >= 3)) {
+        return cb(new Error(
+          'type must be a string' +
+          '3 <= type.length < 52, was:' + type
+        ))
+      }
 
-      if(!queue) {
+      // create queue
+      if (!queue) {
         queue = []
         getPrev(function (err, _prev) {
           prev = _prev
-          if(!prev && type !== 'init')
+          if (!prev && type !== 'init') {
+            // new feed, publish an `init` msg first
             queue.unshift({
               message: {
                 type: 'init',
@@ -66,23 +69,32 @@ module.exports = function (ssb, keys, opts) {
               },
               cb: noop
             })
+          }
           write()
         })
       }
 
-      queue.push({message: message, cb: cb})
-
-      if(prev) write()
+      // queue and write next
+      queue.push({ message: message, cb: cb })
+      if (prev) write()
 
       function write () {
-        while(queue.length) {
+        if (queue.length && !writing) {
+          writing = true
+
+          // send to ssb for write
           var m = queue.shift()
-          prev = create(keys, null, m.message, prev)
-          ssb.add(prev, m.cb)
+          ssb.add(create(keys, null, m.message, prev), function (err, addedmsg) {
+            writing = false
+            if (!err)
+              prev = addedmsg.value
+
+            m.cb(err, addedmsg)
+            write() // continue to drain queue
+          })
         }
       }
       return this
-    }),
-    keys: keys,
+    })
   }
 }

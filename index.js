@@ -22,10 +22,9 @@ function isObject (o) {
 module.exports = function (ssb, keys, opts) {
 
   var create = Message(opts)
-  var id = opts.hash(keys.public)
 
   function getPrev(next) {
-    ssb.getLatest(id, next)
+    ssb.getLatest(keys.id, next)
   }
   function noop (err) {
     if (err) throw err
@@ -35,7 +34,7 @@ module.exports = function (ssb, keys, opts) {
   var prev = null
   var writing = false
   return {
-    id: id,
+    id: keys.id,
     keys: keys,
     init: function (cb) {
       this.add({ type: 'init', public: keys.public }, cb)

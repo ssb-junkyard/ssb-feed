@@ -33,7 +33,7 @@ module.exports = function (opts) {
 
     return sign({
       previous: prev ? opts.hash(opts.codec.encode(prev)) : null,
-      author: opts.hash(keys.public),
+      author: keys.id,
       sequence: prev ? prev.sequence + 1 : 1,
       timestamp: timestamp(),
       hash: 'blake2s',

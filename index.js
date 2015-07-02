@@ -19,6 +19,10 @@ function isObject (o) {
   )
 }
 
+function isEncrypted (str) {
+  return isString(str) && /^[0-9A-Za-z\/+]+={0,2}\.box/.test(str)
+}
+
 module.exports = function (ssb, keys, opts) {
 
   var create = Message(opts)
@@ -45,13 +49,17 @@ module.exports = function (ssb, keys, opts) {
       else if (isObject(message)) { message.type = type } // add(typeStr, mgObj, cbFn)
       else                        { message = { type: type, value: message } } // add(typeStr, msgStr, cbFn)
 
-      type = message.type
+      if(!isEncrypted(message)) {
 
-      if (!(isString(type) && type.length <= 52 && type.length >= 3)) {
-        return cb(new Error(
-          'type must be a string' +
-          '3 <= type.length < 52, was:' + type
-        ))
+        type = message.type
+
+        if (!(isString(type) && type.length <= 52 && type.length >= 3)) {
+          return cb(new Error(
+            'type must be a string' +
+            '3 <= type.length < 52, was:' + type
+          ))
+        }
+
       }
 
       // create queue

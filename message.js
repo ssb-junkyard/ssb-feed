@@ -11,9 +11,6 @@ function isString (s) {
 
 module.exports = function (opts) {
 
-//  var zeros = opts.hash(new Buffer(0))
-//  zeros.fill(0)
-
   function sign (msg, keys) {
 
     msg.signature =
@@ -25,7 +22,7 @@ module.exports = function (opts) {
   function create (keys, type, content, prev) {
 
     //this noise is to handle things calling this with legacy api.
-    if(Buffer.isBuffer(content) || isString(content))
+    if(isString(type) && (Buffer.isBuffer(content) || isString(content)))
       content = {type: type, value: content}
     if(isObject(content))
       content.type = content.type || type

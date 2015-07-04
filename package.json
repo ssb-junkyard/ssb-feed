@@ -8,12 +8,17 @@
     "url": "git://github.com/dominictarr/ssb-feed.git"
   },
   "dependencies": {
-    "pull-stream": "~2.26.0",
     "cont": "~1.0.3",
+    "explain-error": "^1.0.1",
+    "monotonic-timestamp": "~0.0.9",
     "pull-cat": "~1.1.5",
-    "monotonic-timestamp": "~0.0.9"
+    "pull-stream": "~2.26.0",
+    "ssb-ref": "0.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "ssb-keys": "^2.1.0",
+    "tape": "~4.0.0"
+  },
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
   },

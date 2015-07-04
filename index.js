@@ -3,6 +3,9 @@ var Message = require('./message')
 var pull = require('pull-stream')
 var cat = require('pull-cat')
 
+var ssbKeys = require('ssb-keys')
+var codec = require('./codec')
+
 function isFunction (f) {
   return 'function' === typeof f
 }
@@ -23,9 +26,9 @@ function isEncrypted (str) {
   return isString(str) && /^[0-9A-Za-z\/+]+={0,2}\.box/.test(str)
 }
 
-module.exports = function (ssb, keys, opts) {
+module.exports = function (ssb, keys) {
 
-  var create = Message(opts)
+  var create = Message(ssbKeys)
 
   function getPrev(next) {
     ssb.getLatest(keys.id, next)

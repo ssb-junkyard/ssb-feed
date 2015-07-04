@@ -1,5 +1,7 @@
 
 var timestamp = require('monotonic-timestamp')
+var ssbKeys = require('ssb-keys')
+var codec = require('./codec')
 
 function isObject (o) {
   return o && 'object' === typeof o
@@ -14,7 +16,7 @@ module.exports = function (opts) {
   function sign (msg, keys) {
 
     msg.signature =
-      opts.keys.sign(keys, opts.hash(opts.codec.encode(msg)))
+      ssbKeys.sign(keys, codec.encode(msg))
 
     return msg
   }
@@ -29,7 +31,7 @@ module.exports = function (opts) {
     //noise end
 
     return sign({
-      previous: prev ? opts.hash(opts.codec.encode(prev)) : null,
+      previous: prev ? ssbKeys.hash(codec.encode(prev)) : null,
       author: keys.id,
       sequence: prev ? prev.sequence + 1 : 1,
       timestamp: timestamp(),

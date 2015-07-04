@@ -33,7 +33,7 @@ module.exports = function (opts) {
       author: keys.id,
       sequence: prev ? prev.sequence + 1 : 1,
       timestamp: timestamp(),
-      hash: 'blake2s',
+      hash: 'sha256',
       content: content,
     }, keys)
   }

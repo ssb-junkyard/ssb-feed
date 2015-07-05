@@ -16,6 +16,7 @@
     "ssb-ref": "0.0.0"
   },
   "devDependencies": {
+    "pull-pushable": "^1.1.4",
     "ssb-keys": "^2.1.0",
     "tape": "~4.0.0"
   },

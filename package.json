@@ -1,6 +1,6 @@
 {
   "name": "ssb-feed",
-  "description": "",
+  "description": "create and validate ssb feeds",
   "version": "0.2.0",
   "homepage": "https://github.com/dominictarr/ssb-feed",
   "repository": {
@@ -9,15 +9,14 @@
   },
   "dependencies": {
     "cont": "~1.0.3",
-    "explain-error": "^1.0.1",
     "monotonic-timestamp": "~0.0.9",
-    "pull-cat": "~1.1.5",
     "pull-stream": "~2.26.0",
-    "ssb-ref": "0.0.0"
+    "ssb-ref": "0.0.0",
+    "ssb-keys": "^2.1.0"
   },
   "devDependencies": {
+    "explain-error": "^1.0.1",
     "pull-pushable": "^1.1.4",
-    "ssb-keys": "^2.1.0",
     "tape": "~4.0.0"
   },
   "scripts": {

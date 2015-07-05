@@ -1,5 +1,8 @@
 var ssbKeys = require('ssb-keys')
 var timestamp = require('monotonic-timestamp')
+var isRef = require('ssb-ref')
+var isHash = isRef.isHash
+var isFeedId = isRef.isFeedId
 
 var encode = exports.encode = function (obj) {
   return JSON.stringify(obj, null, 2)
@@ -92,25 +95,37 @@ exports.isInvalidContent = function validContent (content) {
   return false
 }
 
-exports.isInvalid = function validateSync (pub, msg, previous) {
-  // :TODO: is there a faster way to measure the size of this message?
+exports.isInvalidShape = function (msg) {
+  if(
+    !isObject(msg) ||
+    !isInteger(msg.sequence) ||
+    !isFeedId(msg.author) ||
+    !(isObject(msg.content) || isEncrypted(msg.content))
+  )
+    return new Error('message has invalid properties')
 
-  var key = previous.key
-  var prev = previous.value
+  //allow encrypted messages, where content is a base64 string.
+  if(!isEncrypted(msg.content)) {
+    var type = msg.content.type
+    if(!isString(type))
+      return new Error('type property must be string')
+
+    if(52 < type.length || type.length < 3)
+      return new Error('type must be 3 < length <= 52, but was:' + type.length)
+  }
 
   var asJson = encode(msg)
   if (asJson.length > 8192) // 8kb
     return new Error( 'encoded message must not be larger than 8192 bytes')
 
-  //allow encrypted messages, where content is a base64 string.
-  if(!isString(msg.content)) {
-    var type = msg.content.type
-    if(!isString(type))
-      return 'type property must be string'
+  return false
+}
 
-    if(52 < type.length || type.length < 3)
-      return new Error('type must be 3 < length <= 52, but was:' + type.length)
-  }
+exports.isInvalid = function validateSync (pub, msg, previous) {
+  // :TODO: is there a faster way to measure the size of this message?
+
+  var key = previous.key
+  var prev = previous.value
 
   if(prev) {
     if(msg.previous !== key)

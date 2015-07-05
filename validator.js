@@ -1,23 +1,11 @@
 'use strict';
 
-var isRef = require('ssb-ref')
-var isHash = isRef.isHash
-var isFeedId = isRef.isFeedId
-var contpara = require('cont').para
-var explain = require('explain-error')
-
-var ssbKeys = require('ssb-keys')
+var hash = require('ssb-keys').hash
 
 // make a validation stream?
 // read the latest record in the database
 // check it against the incoming data,
 // and then read through
-
-function get (db, key) {
-  return function (cb) {
-    return db.get(key, cb)
-  }
-}
 
 function isString (s) {
   return 'string' === typeof s
@@ -33,8 +21,6 @@ function isObject (o) {
 
 var util = require('./util')
 var encode = util.encode
-
-var hash = ssbKeys.hash
 
 module.exports = function (ssb) {
 
@@ -76,7 +62,6 @@ module.exports = function (ssb) {
         op.key = hash(encode(op.value))
       }
 
-      console.log("VALIDATE", id, op.value, feed.key)
       var err
       if(err = util.isInvalid(id, op.value, feed))
         op.cb(err)
@@ -106,13 +91,8 @@ module.exports = function (ssb) {
   }
 
   function add (msg, cb) {
-    if(
-      !isObject(msg) ||
-      !isInteger(msg.sequence) ||
-      !isFeedId(msg.author) ||
-      !(isObject(msg.content) || isString(msg.content))
-    )
-      return cb(new Error('invalid message'))
+    var err = util.isInvalidShape(msg)
+    if(err) return cb(err)
 
     queue(msg.author, {
         key: hash(encode(msg)),

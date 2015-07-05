@@ -1,5 +1,6 @@
 var ssbKeys = require('ssb-keys')
-var codec = require('./codec')
+var encode = require('./codec').encode
+var timestamp = require('monotonic-timestamp')
 
 function isString (s) {
   return 'string' === typeof s
@@ -18,10 +19,6 @@ function clone (obj) {
   for(var k in obj) o[k] = obj[k];
   return o
 }
-
-var encode = require('./codec').encode
-var verify = ssbKeys.verify
-
 
 exports.BatchQueue = function BatchQueue (db) {
 
@@ -53,13 +50,35 @@ exports.BatchQueue = function BatchQueue (db) {
   return write
 }
 
+exports.create = function (keys, type, content, prev, prev_key) {
+
+  //this noise is to handle things calling this with legacy api.
+  if(isString(type) && (Buffer.isBuffer(content) || isString(content)))
+    content = {type: type, value: content}
+  if(isObject(content))
+    content.type = content.type || type
+  //noise end
+
+  prev_key = !prev_key && prev ? ssbKeys.hash(encode(prev)) : prev_key || null
+
+  return ssbKeys.signObj(keys, {
+    previous: prev_key,
+    author: keys.id,
+    sequence: prev ? prev.sequence + 1 : 1,
+    timestamp: timestamp(),
+    hash: 'sha256',
+    content: content,
+  })
+}
+
+
 exports.validate = function validateSync (pub, msg, previous) {
   // :TODO: is there a faster way to measure the size of this message?
 
   var key = previous.key
   var prev = previous.value
 
-  var asJson = codec.encode(msg)
+  var asJson = encode(msg)
   if (asJson.length > 8192) { // 8kb
     validateSync.reason = 'encoded message must not be larger than 8192 bytes'
     return false
@@ -116,12 +135,8 @@ exports.validate = function validateSync (pub, msg, previous) {
     return false
   }
 
-  var _msg = clone(msg)
-  delete _msg.signature
-  if(!verify(pub, msg.signature, encode(_msg))) {
-
+  if(!ssbKeys.verifyObj(pub, msg)) {
     validateSync.reason = 'signature was invalid'
-
     return false
   }
   validateSync.reason = ''

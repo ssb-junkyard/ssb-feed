@@ -1,5 +1,5 @@
 var cont = require('cont')
-var Message = require('./message')
+var util = require('./util')
 var pull = require('pull-stream')
 var cat = require('pull-cat')
 
@@ -30,8 +30,6 @@ module.exports = function (ssb, keys) {
 
   if(!ssb.add)
     throw new Error('*must* install feeds on this ssb instance')
-
-  var create = Message(ssbKeys)
 
   function getPrev(next) {
     ssb.getLatest(keys.id, next)
@@ -68,7 +66,7 @@ module.exports = function (ssb, keys) {
       }
 
       return ssb.add.queue(keys.id, function (key, value) {
-        return create(keys, null, message, value, key)
+        return util.create(keys, null, message, value, key)
       }, cb)
 
       return this

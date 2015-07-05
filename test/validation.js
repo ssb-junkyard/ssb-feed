@@ -9,8 +9,9 @@ var createFeed = require('../')
 
 var opts = ssbKeys
 opts.keys = opts
-  var create = require('../message')(opts)
-  var ssb = require('./mock')()
+
+var ssb = require('./mock')()
+var create = require('../util').create
 
   var validate = require('../validator')(ssb, opts)
 

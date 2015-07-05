@@ -123,7 +123,7 @@ exports.isInvalid = function validateSync (pub, msg, previous) {
     if(msg.previous !== key)
       return new Error(
           'expected previous: '
-        + hash(encode(prev)).toString('base64')
+        + ssbKeys.hash(encode(prev))
         + 'but found:' + msg.previous
       )
 
@@ -137,8 +137,7 @@ exports.isInvalid = function validateSync (pub, msg, previous) {
         return new Error('expected initial message')
   }
 
-  var _pub = pub.public || pub
-  if(!(msg.author === _pub || msg.author === hash(_pub))) {
+  if(msg.author !== pub) {
 
     return new Error(
         'expected different author:'

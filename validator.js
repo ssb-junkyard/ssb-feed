@@ -6,7 +6,6 @@ var isFeedId = isRef.isFeedId
 var contpara = require('cont').para
 var explain = require('explain-error')
 
-var codec = require('./codec')
 var ssbKeys = require('ssb-keys')
 
 // make a validation stream?
@@ -33,9 +32,9 @@ function isObject (o) {
 }
 
 var util = require('./util')
+var encode = util.encode
 
 var hash = ssbKeys.hash
-var encode = codec.encode
 
 module.exports = function (ssb) {
 
@@ -78,14 +77,15 @@ module.exports = function (ssb) {
       }
 
       console.log("VALIDATE", id, op.value, feed.key)
-      if(util.validate(id, op.value, feed)) {
+      var err
+      if(err = util.isInvalid(id, op.value, feed))
+        op.cb(err)
+      else {
         feed.key = op.key
         feed.value = op.value
         feed.ts = Date.now()
         write(op)
       }
-      else
-        op.cb(new Error(util.validate.reason))
     }
   }
 

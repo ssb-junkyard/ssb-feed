@@ -4,7 +4,6 @@ var pull = require('pull-stream')
 var cat = require('pull-cat')
 
 var ssbKeys = require('ssb-keys')
-var codec = require('./codec')
 
 function isFunction (f) {
   return 'function' === typeof f
@@ -53,17 +52,8 @@ module.exports = function (ssb, keys) {
       else if (isObject(message)) { message.type = type } // add(typeStr, mgObj, cbFn)
       else                        { message = { type: type, value: message } } // add(typeStr, msgStr, cbFn)
 
-      if(!isEncrypted(message)) {
-
-        type = message.type
-
-        if (!(isString(type) && type.length <= 52 && type.length >= 3)) {
-          return cb(new Error(
-            'type must be a string' +
-            '3 <= type.length < 52, was:' + type
-          ))
-        }
-      }
+      var err = util.isInvalidContent(message)
+      if(err) return cb(err)
 
       return ssb.add.queue(keys.id, function (key, value) {
         return util.create(keys, null, message, value, key)

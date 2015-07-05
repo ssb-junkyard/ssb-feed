@@ -3,7 +3,10 @@ var tape     = require('tape')
 var pull     = require('pull-stream')
 var explain  = require('explain-error')
 var ssbKeys  = require('ssb-keys')
-var codec    = require('../codec')
+
+function encode (obj) {
+  return JSON.stringify(obj, null, 2)
+}
 
 var createFeed = require('../')
 
@@ -41,7 +44,7 @@ var create = require('../util').create
     messages.forEach(function (msg) {
       validate(msg, function (err) {
         if(_msg)
-          t.equal(opts.hash(codec.encode(_msg)), msg.previous)
+          t.equal(opts.hash(encode(_msg)), msg.previous)
         _msg = msg
         if(err) throw err
         if(msg.sequence === 3)

@@ -1,6 +1,9 @@
 var ssbKeys = require('ssb-keys')
-var encode = require('./codec').encode
 var timestamp = require('monotonic-timestamp')
+
+var encode = exports.encode = function (obj) {
+  return JSON.stringify(obj, null, 2)
+}
 
 function isString (s) {
   return 'string' === typeof s
@@ -18,6 +21,10 @@ function clone (obj) {
   var o = {}
   for(var k in obj) o[k] = obj[k];
   return o
+}
+
+function isEncrypted (str) {
+  return isString(str) && /^[0-9A-Za-z\/+]+={0,2}\.box/.test(str)
 }
 
 exports.BatchQueue = function BatchQueue (db) {
@@ -71,75 +78,71 @@ exports.create = function (keys, type, content, prev, prev_key) {
   })
 }
 
+exports.isInvalidContent = function validContent (content) {
+  if(!isEncrypted(content)) {
 
-exports.validate = function validateSync (pub, msg, previous) {
+    type = content.type
+
+    if (!(isString(type) && type.length <= 52 && type.length >= 3)) {
+      return new Error('type must be a string' +
+        '3 <= type.length < 52, was:' + type
+      )
+    }
+  }
+  return false
+}
+
+exports.isInvalid = function validateSync (pub, msg, previous) {
   // :TODO: is there a faster way to measure the size of this message?
 
   var key = previous.key
   var prev = previous.value
 
   var asJson = encode(msg)
-  if (asJson.length > 8192) { // 8kb
-    validateSync.reason = 'encoded message must not be larger than 8192 bytes'
-    return false
-  }
+  if (asJson.length > 8192) // 8kb
+    return new Error( 'encoded message must not be larger than 8192 bytes')
 
   //allow encrypted messages, where content is a base64 string.
   if(!isString(msg.content)) {
     var type = msg.content.type
-    if(!isString(type)) {
-      validateSync.reason = 'type property must be string'
-      return false
-    }
+    if(!isString(type))
+      return 'type property must be string'
 
-    if(52 < type.length || type.length < 3) {
-      validateSync.reason = 'type must be 3 < length <= 52, but was:' + type.length
-      return false
-    }
+    if(52 < type.length || type.length < 3)
+      return new Error('type must be 3 < length <= 52, but was:' + type.length)
   }
 
   if(prev) {
-    if(msg.previous !== key) {
+    if(msg.previous !== key)
+      return new Error(
+          'expected previous: '
+        + hash(encode(prev)).toString('base64')
+        + 'but found:' + msg.previous
+      )
 
-      validateSync.reason = 'expected previous: '
-        + hash(encode(prev)).toString('base64') + 'but found:' + msg.previous
-
-      return false
-    }
     if(msg.sequence !== prev.sequence + 1
-     || msg.timestamp <= prev.timestamp) {
-
-        validateSync.reason = 'out of order'
-
-        return false
-    }
+     || msg.timestamp <= prev.timestamp)
+        return new Error('out of order')
   }
   else {
     if(!(msg.previous == null
-      && msg.sequence === 1 && msg.timestamp > 0)) {
-
-        validateSync.reason = 'expected initial message'
-
-        return false
-    }
+      && msg.sequence === 1 && msg.timestamp > 0))
+        return new Error('expected initial message')
   }
 
   var _pub = pub.public || pub
   if(!(msg.author === _pub || msg.author === hash(_pub))) {
 
-    validateSync.reason = 'expected different author:'+
-      hash(pub.public || pub).toString('base64') +
-      'but found:' +
-      msg.author.toString('base64')
-
-    return false
+    return new Error(
+        'expected different author:'
+      + hash(pub.public || pub).toString('base64')
+      + 'but found:' + msg.author.toString('base64')
+    )
   }
 
-  if(!ssbKeys.verifyObj(pub, msg)) {
-    validateSync.reason = 'signature was invalid'
-    return false
-  }
-  validateSync.reason = ''
-  return true
+  if(!ssbKeys.verifyObj(pub, msg))
+    return new Error('signature was invalid')
+
+  return false
 }
 

@@ -5,45 +5,24 @@ var explain  = require('explain-error')
 var ssbKeys  = require('ssb-keys')
 var codec    = require('../codec')
 
+var createFeed = require('../')
+
 var opts = ssbKeys
 opts.keys = opts
   var create = require('../message')(opts)
   var ssb = require('./mock')()
 
-  var validation = require('../validator')(ssb, opts)
+  var validate = require('../validator')(ssb, opts)
 
-  tape('getLastest - empty', function (t) {
-    var keys = opts.keys.generate()
-    validation.getLatest(keys.id, function (err, obj) {
-      t.deepEqual({
-        key: null, value: null, type: 'put',
-        public: null, ready: true
-      }, obj)
-      t.end()
-    })
-  })
-  
   tape('single', function (t) {
     var keys = opts.keys.generate()
     var msg = create(keys, null, {type: 'init', public: keys.public})
 
-    validation.validate(msg, function (err) {
+    validate(msg, function (err, msg) {
       if(err) throw err
-      validation.getLatest(msg.author, function (err, obj) {
-        if(err) throw err
-        t.ok(obj)
-        t.deepEqual({
-          key: opts.hash(codec.encode(msg)), value: msg, type: 'put',
-          public: keys.public, ready: true
-        }, obj)
-
-        validation.getLatest(opts.hash(msg.author), function (err, obj) {
-          t.deepEqual({
-            key: null, value: null, type: 'put',
-            public: null, ready: true
-          }, obj)
-          t.end()
-        })
+      ssb.get(msg.key, function (err, _msg) {
+        t.deepEqual(_msg, msg.value)
+        t.end()
       })
     })
   })
@@ -59,7 +38,7 @@ opts.keys = opts
 
     var _msg = null
     messages.forEach(function (msg) {
-      validation.validate(msg, function (err) {
+      validate(msg, function (err) {
         if(_msg)
           t.equal(opts.hash(codec.encode(_msg)), msg.previous)
         _msg = msg
@@ -102,7 +81,7 @@ opts.keys = opts
       }
     )
   })
-  return
+
   tape('race: should queue', function (t) {
     var keys = opts.keys.generate()
     var prev, calls = 0
@@ -141,23 +120,4 @@ opts.keys = opts
 
 
   })
-
-  //when an add fails, you should still be able to add another
-  //message if you wait until it has returned.
-
-  tape('too big', function (t) {
-    var keys = opts.keys.generate()
-    var feed = ssb.createFeed(keys)
-    var str = ''
-    for (var i=0; i < 808; i++) str += '1234567890'
-    feed.add({ type: 'msg', value: str }, function (err) {
-      if(!err) throw new Error('too big was allowed')
-      console.log(err)
-      feed.add({ type: 'msg', value: 'this ones cool tho' }, function (err) {
-        if (err) throw err
-        t.end()
-      })
-    })
-  })
-
 

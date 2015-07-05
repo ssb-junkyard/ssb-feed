@@ -81,7 +81,7 @@ exports.create = function (keys, type, content, prev, prev_key) {
   })
 }
 
-exports.isInvalidContent = function validContent (content) {
+var isInvalidContent = exports.isInvalidContent = function (content) {
   if(!isEncrypted(content)) {
 
     type = content.type
@@ -105,20 +105,12 @@ exports.isInvalidShape = function (msg) {
     return new Error('message has invalid properties')
 
   //allow encrypted messages, where content is a base64 string.
-  if(!isEncrypted(msg.content)) {
-    var type = msg.content.type
-    if(!isString(type))
-      return new Error('type property must be string')
-
-    if(52 < type.length || type.length < 3)
-      return new Error('type must be 3 < length <= 52, but was:' + type.length)
-  }
 
   var asJson = encode(msg)
   if (asJson.length > 8192) // 8kb
     return new Error( 'encoded message must not be larger than 8192 bytes')
 
-  return false
+  return isInvalidContent(msg.content)
 }
 
 exports.isInvalid = function validateSync (pub, msg, previous) {

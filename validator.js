@@ -42,9 +42,11 @@ module.exports = function (ssb) {
     if(latest[id].ready)
       throw new Error('setLatest should only be called once')
     ssb.getLatest(id, function (err, data) {
-      latest[id].key = data.key
-      latest[id].value = data.value
       latest[id].ready = true
+      if(data) {
+        latest[id].key = data.key
+        latest[id].value = data.value
+      }
       validate(id)
     })
   }
@@ -57,13 +59,17 @@ module.exports = function (ssb) {
     while(feed.queue.length) {
       var op = feed.queue.shift()
 
+
       if('function' == typeof op.create) {
         op.value = op.create(feed.key, feed.value)
         op.key = hash(encode(op.value))
       }
 
-      var err
-      if(err = util.isInvalid(id, op.value, feed))
+      var err =
+        util.isInvalidShape(op.value) ||
+        util.isInvalid(id, op.value, feed)
+
+      if(err)
         op.cb(err)
       else {
         feed.key = op.key

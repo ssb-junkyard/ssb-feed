@@ -121,7 +121,19 @@ var create = require('../util').create
         }
       )
     })
-
-
   })
+
+  tape('too big', function (t) {
+    var keys = opts.keys.generate()
+    var str = ''
+    for (var i=0; i < 808; i++) str += '1234567890'
+
+    var msg = create(keys, null, {type: 'msg', value: str})
+
+    validate(msg, function (err, msg) {
+      if(!err) throw new Error('too big was allowed')
+      t.end()
+    })
+  })
+
 

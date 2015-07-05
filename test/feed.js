@@ -1,7 +1,5 @@
 'use strict'
 var tape     = require('tape')
-var level    = require('level-test')()
-var sublevel = require('level-sublevel/bytewise')
 var pull     = require('pull-stream')
 var ssbKeys  = require('ssb-keys')
 var createFeed = require('../')
@@ -119,6 +117,19 @@ tape('tail, parallel add', function (t) {
       })
     )
     addAgain()
+  })
+})
+
+tape('too big', function (t) {
+  var ssb = require('./mock')()
+  var keys = opts.generate()
+  var feed = createFeed(ssb, opts.generate(), opts)
+  var str = ''
+  for (var i=0; i < 808; i++) str += '1234567890'
+
+  feed.add({type: 'msg', value: str}, function (err, msg) {
+    if(!err) throw new Error('too big was allowed')
+    t.end()
   })
 })
 

@@ -28,6 +28,9 @@ function isEncrypted (str) {
 
 module.exports = function (ssb, keys) {
 
+  if(!ssb.add)
+    throw new Error('*must* install feeds on this ssb instance')
+
   var create = Message(ssbKeys)
 
   function getPrev(next) {
@@ -62,48 +65,12 @@ module.exports = function (ssb, keys) {
             '3 <= type.length < 52, was:' + type
           ))
         }
-
       }
 
-      // create queue
-      if (!queue) {
-        queue = []
-        getPrev(function (err, _prev) {
-          prev = _prev
-          if (!prev && type !== 'init') {
-            // new feed, publish an `init` msg first
-            queue.unshift({
-              message: {
-                type: 'init',
-                public: keys.public
-              },
-              cb: noop
-            })
-          }
-          write()
-        })
-      }
+      return ssb.add.queue(keys.id, function (key, value) {
+        return create(keys, null, message, value, key)
+      }, cb)
 
-      // queue and write next
-      queue.push({ message: message, cb: cb })
-      if (prev) write()
-
-      function write () {
-        if (queue.length && !writing) {
-          writing = true
-
-          // send to ssb for write
-          var m = queue.shift()
-          ssb.add(create(keys, null, m.message, prev), function (err, addedmsg) {
-            writing = false
-            if (!err)
-              prev = addedmsg.value
-
-            m.cb(err, addedmsg)
-            write() // continue to drain queue
-          })
-        }
-      }
       return this
     })
   }

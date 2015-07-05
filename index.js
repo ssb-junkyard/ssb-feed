@@ -1,16 +1,10 @@
 var cont = require('cont')
 var util = require('./util')
-var pull = require('pull-stream')
-var cat = require('pull-cat')
 
 var ssbKeys = require('ssb-keys')
 
 function isFunction (f) {
   return 'function' === typeof f
-}
-
-function isString (s) {
-  return 'string' === typeof s
 }
 
 function isObject (o) {
@@ -19,10 +13,6 @@ function isObject (o) {
     && !Buffer.isBuffer(o)
     && !Array.isArray(o)
   )
-}
-
-function isEncrypted (str) {
-  return isString(str) && /^[0-9A-Za-z\/+]+={0,2}\.box/.test(str)
 }
 
 module.exports = function (ssb, keys) {
@@ -43,9 +33,6 @@ module.exports = function (ssb, keys) {
   return {
     id: keys.id,
     keys: keys,
-    init: function (cb) {
-      this.add({ type: 'init', public: keys.public }, cb)
-    },
     add: cont(function (type, message, cb) {
       // argument variations
       if (isFunction(message))    { cb = message; message = type } // add(msgObj, cbFn)

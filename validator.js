@@ -62,7 +62,7 @@ module.exports = function (ssb) {
 
       if('function' == typeof op.create) {
         op.value = op.create(feed.key, feed.value)
-        op.key = hash(encode(op.value))
+        op.key = '%'+hash(encode(op.value))
       }
 
       var err =
@@ -101,7 +101,7 @@ module.exports = function (ssb) {
     if(err) return cb(err)
 
     queue(msg.author, {
-        key: hash(encode(msg)),
+        key: '%'+hash(encode(msg)),
         value: msg, cb: cb,
         create: null
       })

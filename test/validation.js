@@ -44,7 +44,7 @@ var create = require('../util').create
     messages.forEach(function (msg) {
       validate(msg, function (err) {
         if(_msg)
-          t.equal(opts.hash(encode(_msg)), msg.previous)
+          t.equal('%'+opts.hash(encode(_msg)), msg.previous)
         _msg = msg
         if(err) throw err
         if(msg.sequence === 3)

@@ -69,7 +69,7 @@ exports.create = function (keys, type, content, prev, prev_key) {
     content.type = content.type || type
   //noise end
 
-  prev_key = !prev_key && prev ? ssbKeys.hash(encode(prev)) : prev_key || null
+  prev_key = !prev_key && prev ? ('%'+ssbKeys.hash(encode(prev))) : prev_key || null
 
   return ssbKeys.signObj(keys, {
     previous: prev_key,
@@ -123,7 +123,7 @@ exports.isInvalid = function validateSync (pub, msg, previous) {
     if(msg.previous !== key)
       return new Error(
           'expected previous: '
-        + ssbKeys.hash(encode(prev))
+        + key
         + 'but found:' + msg.previous
       )
 

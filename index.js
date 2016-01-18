@@ -30,10 +30,8 @@ module.exports = function (ssb, keys) {
   var queue = null
   var prev = null
   var writing = false
-  return {
-    id: keys.id,
-    keys: keys,
-    add: cont(function (type, message, cb) {
+  var publish =
+    cont(function (type, message, cb) {
       // argument variations
       if (isFunction(message))    { cb = message; message = type } // add(msgObj, cbFn)
       else if (isObject(message)) { message.type = type } // add(typeStr, mgObj, cbFn)
@@ -48,5 +46,13 @@ module.exports = function (ssb, keys) {
 
       return this
     })
+
+  return {
+    id: keys.id,
+    keys: keys,
+    add: publish,
+    publish: publish
   }
 }
+
+

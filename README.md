@@ -1,22 +1,34 @@
 # ssb-feed
 
-appendable to an ssb feed.
+A publishing interface for scuttlebutt feeds.
+
+By default, [Scuttlebot](https://ssbc.github.io/scuttlebot/) uses a "master" identity/feed, which `sbot.publish()` will append new messages to. If you want to manipulate additional feeds, you can load the keypair and then use this library to do so.
 
 ## Example
 
 ``` js
 
-var Feed = require('ssb-feed')
-//can be a client instance, or a local scuttlebot instance.
-var ssbc = require('ssb-client')()
+var ssbFeed = require('ssb-feed')
+var ssbClient = require('ssb-client')
 var ssbKeys = require('ssb-keys')
 
 var alice = ssbKeys.generate()
-var f = Feed(ssbc, alice)
+ssbClient(function (err, sbot) {
+  var feed = ssbFeed(sbot, alice)
 
-//post to alice's feed.
-f.publish({type: 'post', text: 'hello world, I am alice.'}, function (err) {})
+  // Post to alice's feed
+  feed.publish({
+    type: 'post',
+    text: 'hello world, I am alice.'
+  }, function (err) { ... })
+
+  // Also available:
+  console.log(feed.id)
+  console.log(feed.keys)
+})
 ```
+
+This example uses `ssb-client`, but, if you're embedding `scuttlebot` or the `secure-scuttlebutt` library into your process, you can use them locally.
 
 ## License
 

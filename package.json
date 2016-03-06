@@ -1,7 +1,7 @@
 {
   "name": "ssb-feed",
   "description": "create and validate ssb feeds",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "homepage": "https://github.com/dominictarr/ssb-feed",
   "repository": {
     "type": "git",
@@ -11,7 +11,7 @@
     "cont": "~1.0.3",
     "monotonic-timestamp": "~0.0.9",
     "pull-stream": "~2.26.0",
-    "ssb-keys": "^4.0.1",
+    "ssb-keys": "^5.0.0",
     "ssb-ref": "^2.0.0"
   },
   "devDependencies": {

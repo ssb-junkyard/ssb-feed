@@ -40,9 +40,19 @@ module.exports = function (ssb, keys) {
       var err = util.isInvalidContent(message)
       if(err) return cb(err)
 
-      return ssb.add.queue(keys.id, function (key, value) {
-        return util.create(keys, null, message, value, key)
-      }, cb)
+      if(ssb.add.queue) {
+        return ssb.add.queue(keys.id, function (key, value) {
+          return util.create(keys, null, message, value, key)
+        }, cb)
+      }
+
+      ssb.getLatest(keys.id, function (err, data) {
+        var msg = data
+          ? util.create(keys, null, message, data.value, data.key)
+          : util.create(keys, null, message, null, null)
+        
+        ssb.add(msg, cb)
+      })
 
       return this
     })
@@ -54,5 +64,6 @@ module.exports = function (ssb, keys) {
     publish: publish
   }
 }
+
 
 

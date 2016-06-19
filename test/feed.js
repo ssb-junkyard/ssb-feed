@@ -5,131 +5,181 @@ var ssbKeys  = require('ssb-keys')
 var createFeed = require('../')
 var opts = ssbKeys
 
-tape('simple', function (t) {
+var crypto = require('crypto')
 
-  var ssb = require('./mock')()
+var seed = crypto.createHash('sha256').update('test1').digest()
+var assert = require('assert')
 
-  var feed = createFeed(ssb, opts.generate(), opts)
+module.exports = function (createMock, createAsync) {
 
-  feed.add({type: 'msg', value: 'hello there!'}, function (err, msg) {
-    if(err) throw err
-    console.log('added', msg)
-    t.assert(!!msg)
-    t.assert(!!msg.key)
-    t.assert(!!msg.value)
-    pull(
-      ssb.createFeedStream(),
-      pull.collect(function (err, ary) {
+  tape('simple', function (t) {
+
+    createAsync(function (async) {
+
+      var ssb = createMock(async)
+
+      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
+
+      feed.add({type: 'msg', value: 'hello there!'}, function (err, msg) {
         if(err) throw err
-        console.log('**************************')
-        console.log(JSON.stringify(ary, null, 2))
-
-        t.equal(ary.length, 1)
-        t.ok(!!ary[0].key)
-        t.ok(!!ary[0].value)
-        t.end()
+        console.log('added', msg)
+        assert.ok(!!msg)
+        assert.ok(!!msg.key)
+        assert.ok(!!msg.value)
+        pull(
+          ssb.createFeedStream(),
+          pull.collect(function (err, ary) {
+            if(err) throw err
+            assert.equal(ary.length, 1)
+            assert.ok(!!ary[0].key)
+            assert.ok(!!ary[0].value)
+            async.done()
+          })
+        )
       })
-    )
+    }, function (err) {
+      if(err) throw err
+      t.end()
+    })
   })
 
-})
 
-tape('tail', function (t) {
+  //write in series
+  tape('tail', function (t) {
+    createAsync(function (async) {
+      var ssb = createMock(async)
 
-  var ssb = require('./mock')()
+      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
 
-  var feed = createFeed(ssb, opts.generate(), opts)
+      console.log('add 1'); console.log('add 2');
+      var nDrains = 0, nAdds = 2;
 
-  console.log('add 1'); console.log('add 2');
-  var nDrains = 0, nAdds = 2;
+      feed.add({
+        type: 'msg',
+        value:'hello there!'
+      }, function (err, msg1) {
 
-  feed.add({
-    type: 'msg',
-    value:'hello there!'
-  }, function (err, msg1) {
-
-    if(err) throw err
-    var lasthash = msg1.key
-
-    function addAgain() {
-      feed.add({type: 'msg', value: 'message '+nDrains}, function(err, msgX) {
         if(err) throw err
-        t.equal(msgX.value.previous, lasthash)
-        console.log(msgX.value.previous, lasthash)
-        lasthash = msgX.key;
-        nAdds++;
-        console.log('add', nAdds);
-        if (err) throw err;
-        if (nAdds > 7) {
-          console.log('TIMEOUT');
-          throw new Error('Should have had 5 drains by now.');
-        }
-      });
-    }
+        var lasthash = msg1.key
 
-    var int = setInterval(addAgain, 100);
+        pull(
+          pull.values([1,2,3,4]),
+          async.through(),
+          pull.asyncMap(function (n, cb) {
+            feed.add({type: 'msg', value: 'message '+n}, function(err, msgX) {
+              if(err) throw err
+              assert.equal(msgX.value.previous, lasthash)
+              lasthash = msgX.key;
+              cb()
+            })
+          }),
+          pull.drain()
+        )
 
-    pull(
-      ssb.createFeedStream({ live: true }),
-      pull.drain(function (ary) {
-        nDrains++;
-        if (nDrains == 5) {
-          t.assert(true);
-          t.end()
-          clearInterval(int);
-        }
+        pull(
+          ssb.createFeedStream({ live: true }),
+          pull.drain(function (ary) {
+            nDrains++;
+            if (nDrains == 4) {
+              async.done()
+              return false
+            }
+          })
+        )
+
       })
-    )
-    addAgain();
+    }, function (err) {
+      console.log(err)
+      if(err) throw err
+      t.end()
+    })
   })
-})
 
-tape('tail, parallel add', function (t) {
+  tape('tail, parallel add', function (t) {
+    createAsync(function (async) {
+      var ssb = createMock(async)
 
-  var ssb = require('./mock')()
+      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
 
-  var feed = createFeed(ssb, opts.generate(), opts)
+      var nDrains = 0, nAdds = 2, l = 7
+      feed.add({type: 'msg', value: 'hello there!'}, function (err, msg1) {
+        if(err) throw err
 
-  var nDrains = 0, nAdds = 2, l = 7
-  feed.add({type: 'msg', value: 'hello there!'}, function (err, msg1) {
-    if(err) throw err
+        var lasthash = msg1.key
 
-    var lasthash = msg1.key
-    function addAgain() {
-      feed.add('msg', 'message '+nDrains, function(err, msgX) {
-        t.equal(msgX.value.previous, lasthash)
-        lasthash = msgX.key;
-        nAdds++;
-        if (err) throw err;
-      });
-      if(--l) addAgain()
-    }
-
-    pull(
-      ssb.createFeedStream({ live: true }),
-      pull.drain(function (ary) {
-        nDrains++;
-        console.log('drain', nDrains)
-        if (nDrains == 7) {
-          t.assert(true);
-          t.end()
+        function addAgain(n) {
+          feed.add('msg', 'message '+n, function(err, msgX) {
+//            assert.equal(msgX.value.previous, lasthash)
+//            lasthash = msgX.key;
+            nAdds++;
+            if (err) throw err;
+          });
         }
+
+        var received = []
+
+        pull(
+          ssb.createFeedStream({ live: true }),
+          pull.drain(function (msg) {
+            nDrains++;
+            received.push(msg)
+            console.log('drain', nDrains)
+            if (nDrains == 3) {
+              assert.deepEqual(received.map(function (v) {
+                return v.value.content.value
+              }), ['hello there!', 'message 1', 'message 2'])
+              async.done()
+              return false
+            }
+          })
+        )
+
+        addAgain(1)
+        addAgain(2)
+//        addAgain(3)
+//        addAgain(4)
       })
-    )
-    addAgain()
+    }, function (err) {
+      if(err) throw err
+      t.end()
+    })
   })
-})
 
-tape('too big', function (t) {
-  var ssb = require('./mock')()
-  var keys = opts.generate()
-  var feed = createFeed(ssb, opts.generate(), opts)
-  var str = ''
-  for (var i=0; i < 808; i++) str += '1234567890'
+  tape('too big', function (t) {
+    createAsync(function (async) {
+      var ssb = createMock(async)
+      var keys = opts.generate()
+      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
+      var str = ''
+      for (var i=0; i < 808; i++) str += '1234567890'
 
-  feed.add({type: 'msg', value: str}, function (err, msg) {
-    if(!err) throw new Error('too big was allowed')
-    t.end()
+      feed.add({type: 'msg', value: str}, function (err, msg) {
+        if(!err) throw new Error('too big was allowed')
+        async.done()
+      })
+    }, function (err) {
+      if(err) throw err  
+      t.end()
+    })
   })
-})
+
+}
+
+if(!module.parent)
+  module.exports(require('./mock'), require('./util').sync)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

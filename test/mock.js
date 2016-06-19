@@ -9,26 +9,25 @@ function compare (a, b) {
 
 var pull = require('pull-stream')
 
-module.exports = function () {
+module.exports = function (async) {
 
   var data = [], validator, live
 
   var ssbMock = {
     data: data,
 
-    getLatest: function (id, cb) {
+    getLatest: async(function (id, cb) {
       var last, max = 0
       data.forEach(function (data) {
-        console.log(id, data)
         if(data.value.author === id && data.value.sequence >= max) {
           last = data; max = last.value.sequence
         }
       })
-      cb(null, last || {key:null,value:null})
-    },
+      cb (null, last || {key:null,value:null})
+    }, 'add'),
 
-    batch: function (batch, cb) {
-      console.log('BATCH', batch)
+    batch: async(function (batch, cb) {
+      console.log('BATCH', JSON.stringify(batch))
       batch.forEach(function (d) {
         if(!d.key && d.value) throw new Error('invalid batch')
         if(live) live.push(d)
@@ -36,29 +35,35 @@ module.exports = function () {
       })
       data.sort(compare)
       cb()
-    },
+    }, 'batch'),
 
-    get: function (id, cb) {
+    get: async(function (id, cb) {
       for(var i = 0; i < data.length; i++)
         if(id === data[i].key)
           return cb(null, data[i].value)
       cb(new Error('value not found'))
 
-    },
+    }, 'get'),
 
     //this is also needed for the tests.
     createFeedStream: function (opts) {
       opts = opts || {}
-      console.log('create_feed_stream', data)
       if(opts.live) {
-        live = Pushable(); data.forEach(live.push)
+        live = Pushable()
+        data.forEach(function (v) { live.push(v) })
       }
       return pull(
-        opts.live ? live: pull.values(data),
+        opts.live ? live : pull.values(data),
         pull.map(function (data) {
           if(opts.keys === false) return data.value
           return data
-        })
+        }),
+        pull.through(function (D) {
+          console.log('READ', D)
+        }, function (err) {
+          console.log("ERR", err)
+        }),
+        async.through('feed')
       )
     }
   }
@@ -67,3 +72,4 @@ module.exports = function () {
 
   return ssbMock
 }
+

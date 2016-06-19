@@ -8,13 +8,19 @@ function encode (obj) {
   return JSON.stringify(obj, null, 2)
 }
 
+var u = require('./util')
+
+
 var createFeed = require('../')
 
 var opts = ssbKeys
 opts.keys = opts
 
-var ssb = require('./mock')()
-var create = require('../util').create
+
+u.sync(function (async) {
+
+  var ssb = require('./mock')(async)
+  var create = require('../util').create
 
   var validate = require('../validator')(ssb, opts)
 
@@ -136,4 +142,4 @@ var create = require('../util').create
     })
   })
 
-
+})

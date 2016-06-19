@@ -10,12 +10,13 @@
   "dependencies": {
     "cont": "~1.0.3",
     "monotonic-timestamp": "~0.0.9",
-    "pull-stream": "~2.26.0",
+    "pull-stream": "^3.4.2",
     "ssb-keys": "^5.0.0",
     "ssb-ref": "^2.0.0"
   },
   "devDependencies": {
     "explain-error": "^1.0.1",
+    "interleavings": "^0.3.1",
     "pull-pushable": "^1.1.4",
     "tape": "~4.0.0"
   },
@@ -25,3 +26,4 @@
   "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://dominictarr.com)",
   "license": "MIT"
 }
+

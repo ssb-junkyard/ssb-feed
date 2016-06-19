@@ -1,5 +1,6 @@
 var cont = require('cont')
 var util = require('./util')
+var Queue = require('./queue')
 
 var ssbKeys = require('ssb-keys')
 
@@ -20,16 +21,23 @@ module.exports = function (ssb, keys) {
   if(!ssb.add)
     throw new Error('*must* install feeds on this ssb instance')
 
-  function getPrev(next) {
-    ssb.getLatest(keys.id, next)
-  }
-  function noop (err) {
-    if (err) throw err
-  }
+  var queue = Queue(function (msg, prev, cb) {
+    if(prev) next(prev)
+    else
+      ssb.getLatest(keys.id, function (_, prev) { next(prev) })
 
-  var queue = null
-  var prev = null
-  var writing = false
+    function next (prev) {
+      ssb.add(
+        util.create(
+          keys, null, msg,
+          prev && prev.value,
+          prev && prev.key
+        ),
+        cb
+      )
+    }
+  })
+
   var publish =
     cont(function (type, message, cb) {
       // argument variations
@@ -40,19 +48,7 @@ module.exports = function (ssb, keys) {
       var err = util.isInvalidContent(message)
       if(err) return cb(err)
 
-      if(ssb.add.queue) {
-        return ssb.add.queue(keys.id, function (key, value) {
-          return util.create(keys, null, message, value, key)
-        }, cb)
-      }
-
-      ssb.getLatest(keys.id, function (err, data) {
-        var msg = data
-          ? util.create(keys, null, message, data.value, data.key)
-          : util.create(keys, null, message, null, null)
-        
-        ssb.add(msg, cb)
-      })
+      queue(message, cb)
 
       return this
     })
@@ -64,6 +60,4 @@ module.exports = function (ssb, keys) {
     publish: publish
   }
 }
-
-
 

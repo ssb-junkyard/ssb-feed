@@ -1,7 +1,7 @@
 {
   "name": "ssb-feed",
   "description": "create and validate ssb feeds",
-  "version": "2.1.3",
+  "version": "2.2.0",
   "homepage": "https://github.com/dominictarr/ssb-feed",
   "repository": {
     "type": "git",

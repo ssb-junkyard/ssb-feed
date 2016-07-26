@@ -16,15 +16,18 @@ function isObject (o) {
   )
 }
 
-module.exports = function (ssb, keys) {
-
+module.exports = function (ssb, keys, opts) {
+  opts = opts || {}
   if(!ssb.add)
-    throw new Error('*must* install feeds on this ssb instance')
+    throw new Error('*must* install feeds on ssb instance')
 
   var queue = Queue(function (msg, prev, cb) {
-    if(prev) next(prev)
+    if(prev && !opts.remote) next(prev)
     else
-      ssb.getLatest(keys.id, function (_, prev) { next(prev) })
+      ssb.getLatest(keys.id, function (err, prev) {
+        if(err) cb(err)
+        else next(prev)
+      })
 
     function next (prev) {
       ssb.add(
@@ -60,4 +63,5 @@ module.exports = function (ssb, keys) {
     publish: publish
   }
 }
+
 

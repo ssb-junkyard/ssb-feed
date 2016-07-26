@@ -3,14 +3,14 @@ var tape     = require('tape')
 var pull     = require('pull-stream')
 var ssbKeys  = require('ssb-keys')
 var createFeed = require('../')
-var opts = ssbKeys
+var ssbkeys = ssbKeys
 
 var crypto = require('crypto')
 
 var seed = crypto.createHash('sha256').update('test1').digest()
 var assert = require('assert')
 
-module.exports = function (createMock, createAsync) {
+module.exports = function (createMock, createAsync, opts) {
 
   tape('simple', function (t) {
 
@@ -18,7 +18,7 @@ module.exports = function (createMock, createAsync) {
 
       var ssb = createMock(async)
 
-      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
+      var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
 
       feed.add({type: 'msg', value: 'hello there!'}, function (err, msg) {
         if(err) throw err
@@ -49,7 +49,7 @@ module.exports = function (createMock, createAsync) {
     createAsync(function (async) {
       var ssb = createMock(async)
 
-      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
+      var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
 
       console.log('add 1'); console.log('add 2');
       var nDrains = 0, nAdds = 2;
@@ -99,7 +99,7 @@ module.exports = function (createMock, createAsync) {
     createAsync(function (async) {
       var ssb = createMock(async)
 
-      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
+      var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
 
       var nDrains = 0, nAdds = 2, l = 7
       feed.add({type: 'msg', value: 'hello there!'}, function (err, msg1) {
@@ -148,8 +148,8 @@ module.exports = function (createMock, createAsync) {
   tape('too big', function (t) {
     createAsync(function (async) {
       var ssb = createMock(async)
-      var keys = opts.generate()
-      var feed = createFeed(ssb, opts.generate('ed25519', seed), opts)
+      var keys = ssbkeys.generate()
+      var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
       var str = ''
       for (var i=0; i < 808; i++) str += '1234567890'
 
@@ -163,23 +163,28 @@ module.exports = function (createMock, createAsync) {
     })
   })
 
+  tape('error', function (t) {
+    createAsync(function (async) {
+      var keys = ssbkeys.generate()
+      var feed = createFeed({
+        add: function () { throw new Error('should not be called') },
+        getLatest: async(function (id, cb) {
+          cb(new Error('key not found'))
+        })
+      }, ssbkeys.generate('ed25519', seed), opts)
+
+      feed.add({type: 'test', okay: true}, function (err) {
+        t.ok(err)
+        async.done()
+      })
+
+    }, function () {
+      t.end()
+    })
+  })
+
 }
 
 if(!module.parent)
-  module.exports(require('./mock'), require('./util').sync)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  module.exports(require('./mock'), require('./util').sync, {remote: false})
 

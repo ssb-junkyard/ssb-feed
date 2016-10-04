@@ -16,7 +16,7 @@ module.exports = function (createMock, createAsync, opts) {
 
     createAsync(function (async) {
 
-      var ssb = createMock(async)
+      var ssb = createMock(async, opts)
 
       var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
 
@@ -47,7 +47,7 @@ module.exports = function (createMock, createAsync, opts) {
   //write in series
   tape('tail', function (t) {
     createAsync(function (async) {
-      var ssb = createMock(async)
+      var ssb = createMock(async, opts)
 
       var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
 
@@ -97,7 +97,7 @@ module.exports = function (createMock, createAsync, opts) {
 
   tape('tail, parallel add', function (t) {
     createAsync(function (async) {
-      var ssb = createMock(async)
+      var ssb = createMock(async, opts)
 
       var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
 
@@ -147,7 +147,7 @@ module.exports = function (createMock, createAsync, opts) {
 
   tape('too big', function (t) {
     createAsync(function (async) {
-      var ssb = createMock(async)
+      var ssb = createMock(async, opts)
       var keys = ssbkeys.generate()
       var feed = createFeed(ssb, ssbkeys.generate('ed25519', seed), opts)
       var str = ''
@@ -185,6 +185,15 @@ module.exports = function (createMock, createAsync, opts) {
 
 }
 
-if(!module.parent)
-  module.exports(require('./mock'), require('./util').sync, {remote: false})
+if(!module.parent) {
+  //tests without a cap
+  module.exports(require('./mock'), require('./util').sync, { remote: false })
+  //with cap
+  module.exports(require('./mock'), require('./util').sync, {
+  remote: false, caps: {sign: crypto.createHash('sha256').digest('test with digest').toString('base64')}
+})
+
+}
+
+
 

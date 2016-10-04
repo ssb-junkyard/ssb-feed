@@ -9,7 +9,7 @@ function compare (a, b) {
 
 var pull = require('pull-stream')
 
-module.exports = function (async) {
+module.exports = function (async, opts) {
 
   var data = [], validator, live
 
@@ -67,9 +67,9 @@ module.exports = function (async) {
       )
     }
   }
-
-  ssbMock.add = Validator(ssbMock)
+  ssbMock.add = Validator(ssbMock, opts)
 
   return ssbMock
 }
+
 

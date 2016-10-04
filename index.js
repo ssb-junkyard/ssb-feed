@@ -21,6 +21,8 @@ module.exports = function (ssb, keys, opts) {
   if(!ssb.add)
     throw new Error('*must* install feeds on ssb instance')
 
+  var sign_cap = util.toBuffer(opts.caps && opts.caps.sign)
+
   var queue = Queue(function (msg, prev, cb) {
     if(prev && !opts.remote) next(prev)
     else
@@ -34,7 +36,8 @@ module.exports = function (ssb, keys, opts) {
         util.create(
           keys, null, msg,
           prev && prev.value,
-          prev && prev.key
+          prev && prev.key,
+          sign_cap
         ),
         cb
       )
@@ -63,5 +66,4 @@ module.exports = function (ssb, keys, opts) {
     publish: publish
   }
 }
-
 

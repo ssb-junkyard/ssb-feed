@@ -22,9 +22,10 @@ function isObject (o) {
 var util = require('./util')
 var encode = util.encode
 
-module.exports = function (ssb) {
-
+module.exports = function (ssb, opts) {
+  opts = opts || {}
   var write = util.BatchQueue(ssb)
+  var sign_cap = util.toBuffer(opts.caps && opts.caps.sign)
 
   function getLatest (id, cb) {
     ssb.getLatest(id, function (err, data) {
@@ -67,7 +68,7 @@ module.exports = function (ssb) {
 
       var err =
         util.isInvalidShape(op.value) ||
-        util.isInvalid(id, op.value, feed)
+        util.isInvalid(id, op.value, feed, sign_cap)
 
       if(err)
         op.cb(err)
@@ -117,3 +118,4 @@ module.exports = function (ssb) {
 
   return add
 }
+

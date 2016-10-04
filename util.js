@@ -30,6 +30,12 @@ function isEncrypted (str) {
   return isString(str) && /^[0-9A-Za-z\/+]+={0,2}\.box/.test(str)
 }
 
+exports.toBuffer = function (b) {
+  if('string' == typeof b) return new Buffer(b, 'base64')
+  return b
+}
+
+
 exports.BatchQueue = function BatchQueue (db) {
 
   var batch = [], writing = false
@@ -60,7 +66,7 @@ exports.BatchQueue = function BatchQueue (db) {
   return write
 }
 
-exports.create = function (keys, type, content, prev, prev_key) {
+exports.create = function (keys, type, content, prev, prev_key, sign_cap) {
 
   //this noise is to handle things calling this with legacy api.
   if(isString(type) && (Buffer.isBuffer(content) || isString(content)))
@@ -70,8 +76,8 @@ exports.create = function (keys, type, content, prev, prev_key) {
   //noise end
 
   prev_key = !prev_key && prev ? ('%'+ssbKeys.hash(encode(prev))) : prev_key || null
-
-  return ssbKeys.signObj(keys, {
+  
+  return ssbKeys.signObj(keys, sign_cap, {
     previous: prev_key,
     author: keys.id,
     sequence: prev ? prev.sequence + 1 : 1,
@@ -113,7 +119,7 @@ exports.isInvalidShape = function (msg) {
   return isInvalidContent(msg.content)
 }
 
-exports.isInvalid = function validateSync (pub, msg, previous) {
+exports.isInvalid = function (pub, msg, previous, sign_cap) {
   // :TODO: is there a faster way to measure the size of this message?
 
   var key = previous.key
@@ -146,9 +152,10 @@ exports.isInvalid = function validateSync (pub, msg, previous) {
     )
   }
 
-  if(!ssbKeys.verifyObj(pub, msg))
+  if(!ssbKeys.verifyObj(pub, sign_cap, msg))
     return new Error('signature was invalid')
 
   return false
 }
+
 

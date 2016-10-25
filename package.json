@@ -11,7 +11,7 @@
     "cont": "~1.0.3",
     "monotonic-timestamp": "~0.0.9",
     "pull-stream": "^3.4.2",
-    "ssb-keys": "^6.0.0",
+    "ssb-keys": "^7.0.0",
     "ssb-ref": "^2.0.0"
   },
   "devDependencies": {

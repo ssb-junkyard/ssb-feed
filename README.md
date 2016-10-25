@@ -2,7 +2,12 @@
 
 A publishing interface for scuttlebutt feeds.
 
-By default, [Scuttlebot](https://ssbc.github.io/scuttlebot/) uses a "master" identity/feed, which `sbot.publish()` will append new messages to. If you want to manipulate additional feeds, you can load the keypair and then use this library to do so.
+Track the state necessary to publish ssb feeds. This is built into secure-scuttlebutt,
+where it validates replicated messages, and it is also used "remotely" in patchbay.
+
+By default, [Scuttlebot](https://ssbc.github.io/scuttlebot/) uses a "master" identity/feed,
+which `sbot.publish()` will append new messages to. If you want to manipulate additional feeds,
+you can load the keypair and then use this library to do so.
 
 ## Example
 

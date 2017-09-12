@@ -1,3 +1,4 @@
+'use strict'
 var ssbKeys = require('ssb-keys')
 var timestamp = require('monotonic-timestamp')
 var isRef = require('ssb-ref')
@@ -90,7 +91,7 @@ exports.create = function (keys, type, content, prev, prev_key, sign_cap) {
 var isInvalidContent = exports.isInvalidContent = function (content) {
   if(!isEncrypted(content)) {
 
-    type = content.type
+    var type = content.type
 
     if (!(isString(type) && type.length <= 52 && type.length >= 3)) {
       return new Error('type must be a string' +
@@ -126,12 +127,13 @@ exports.isInvalid = function (pub, msg, previous, sign_cap) {
   var prev = previous.value
 
   if(prev) {
-    if(msg.previous !== key)
+    if(msg.previous !== key) {
       return new Error(
           'expected previous: '
         + key
-        + 'but found:' + msg.previous
+        + ' but found:' + msg.previous
       )
+    }
 
     if(msg.sequence !== prev.sequence + 1
      || msg.timestamp <= prev.timestamp)
@@ -157,5 +159,6 @@ exports.isInvalid = function (pub, msg, previous, sign_cap) {
 
   return false
 }
+
 
 
